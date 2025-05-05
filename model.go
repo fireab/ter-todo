@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -15,6 +16,7 @@ const (
 )
 
 type taskInput struct {
+	Id          int
 	Title       string
 	Description string
 	Status      StatusType
@@ -35,28 +37,69 @@ func initialModel() model {
 	ti.CharLimit = 156
 	ti.Width = 20
 
+	ti2 := textinput.New()
+	ti2.Placeholder = "Description"
+	ti2.Cursor.Blink = true
+	ti2.Cursor.Style = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#F0F8FF")).
+		Bold(true).
+		Blink(true).
+		Underline(true)
+
+	ti2.Prompt = "✏️  "
+	ti2.Focus()
+	ti2.CharLimit = 156
+	ti2.Width = 20
+
+	var columns = []table.Column{
+		{Title: "ID", Width: 5},
+		{Title: "Title", Width: 30},
+		{Title: "Description", Width: 50},
+		{Title: "Status", Width: 10},
+	}
+
+	// initalize table
+	t := table.New(
+		table.WithColumns(columns),
+		// table.WithRows(rows),
+		table.WithFocused(true),
+		table.WithHeight(7),
+	)
+
+	s := table.DefaultStyles()
+	s.Header = s.Header.
+		BorderStyle(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		BorderBottom(true).
+		Bold(true)
+	s.Selected = s.Selected.
+		Foreground(lipgloss.Color("229")).
+		Background(lipgloss.Color("57")).
+		Bold(false)
+	t.SetStyles(s)
+
 	return model{
-		textInput: ti,
-		Tasks:     []string{},
-		Message:   "",
-		TaskList:  []taskInput{},
-		err:       nil,
+		textInput:  ti,
+		TaskList:   []taskInput{},
+		err:        nil,
+		table:      t,
+		focusInput: true,
 	}
 }
 
 // Define the model
 type model struct {
-	Tasks     []string
-	Message   string
-	textInput textinput.Model
-	TaskList  []taskInput
-	hight     int
-	width     int
-	err       error
+	textInput  textinput.Model
+	TaskList   []taskInput
+	hight      int
+	width      int
+	err        error
+	table      table.Model
+	focusInput bool
 }
 
 // Initialize the model
 func (m model) Init() tea.Cmd {
-
-	return textinput.Blink
+	// return textinput.Blink
+	return nil
 }

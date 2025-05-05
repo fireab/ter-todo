@@ -1,36 +1,73 @@
 package main
 
 import (
+	"strconv"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-
-	// Update the text input first
-	m.textInput, cmd = m.textInput.Update(msg)
+	if m.focusInput {
+		m.textInput, cmd = m.textInput.Update(msg)
+	} else {
+		m.table, cmd = m.table.Update(msg)
+	}
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 
 		case tea.KeyEnter.String():
-			if strings.TrimSpace(m.textInput.Value()) != "" {
-				m.Tasks = append(m.Tasks, m.textInput.Value())
+			if m.focusInput {
 
-				m.TaskList = append(m.TaskList, taskInput{
-					Title:       m.textInput.Value(),
-					Description: "description",
-					Status:      ToDo,
-				})
+				val := strings.TrimSpace(m.textInput.Value())
+				if val != "" {
+					m.TaskList = append(m.TaskList, taskInput{
+						Id:          len(m.TaskList) + 1,
+						Title:       val,
+						Description: "description",
+						Status:      ToDo,
+					})
 
+					// ✅ Update table rows here
+					var rows = make([]table.Row, len(m.TaskList))
+					for i, task := range m.TaskList {
+						rows[i] = table.Row{
+							strconv.Itoa(task.Id),
+							task.Title,
+							task.Description,
+							string(task.Status),
+						}
+					}
+					m.table.SetRows(rows)
+				}
 				m.textInput.Reset()
-				m.textInput.Focus()
 			}
+			return m, nil
 
-		case tea.KeyCtrlC.String(), tea.KeyEsc.String():
+		case "esc":
+			if m.table.Focused() {
+				m.table.Blur()
+			} else {
+				m.table.Focus()
+			}
+			return m, nil
+		case "tab":
+			// Toggle focus
+			m.focusInput = !m.focusInput
+			if m.focusInput {
+				m.textInput.Focus()
+				m.table.Blur()
+			} else {
+				m.textInput.Blur()
+				m.table.Focus()
+			}
+			return m, nil
+
+		case tea.KeyCtrlC.String():
 			return m, tea.Quit
 
 		default:
