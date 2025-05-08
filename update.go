@@ -10,25 +10,28 @@ import (
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-	if m.focusInput {
-		m.textInput, cmd = m.textInput.Update(msg)
+	if m.focusInput == TaskInputFocus {
+		m.taskInput, cmd = m.taskInput.Update(msg)
+	} else if m.focusInput == DesInputFocus {
+
+		m.descriptonInput, cmd = m.descriptonInput.Update(msg)
 	} else {
+
 		m.table, cmd = m.table.Update(msg)
 	}
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-
 		case tea.KeyEnter.String():
-			if m.focusInput {
-
-				val := strings.TrimSpace(m.textInput.Value())
+			if m.focusInput == TaskInputFocus || m.focusInput == DesInputFocus {
+				val := strings.TrimSpace(m.taskInput.Value())
+				desc := strings.TrimSpace(m.descriptonInput.Value())
 				if val != "" {
 					m.TaskList = append(m.TaskList, taskInput{
 						Id:          len(m.TaskList) + 1,
 						Title:       val,
-						Description: "description",
+						Description: desc,
 						Status:      ToDo,
 					})
 
@@ -44,8 +47,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					m.table.SetRows(rows)
 				}
-				m.textInput.Reset()
+				m.taskInput.Reset()
+				m.taskInput.Focus()
+				m.descriptonInput.Blur()
+				m.table.Blur()
+				m.focusInput = TaskInputFocus
+				m.descriptonInput.Reset()
 			}
+			if m.focusInput == TableFocus {
+				// fmt.Println("Table clicked", m.table.SelectedRow()[1])
+				// fmt.Println("Table Focuse", m.table.Focused())
+				return m, tea.Batch(
+					tea.Printf("Let's go to %s!", m.table.SelectedRow()[1]),
+				)
+			}
+
 			return m, nil
 
 		case "esc":
@@ -56,16 +72,30 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, nil
 		case "tab":
-			// Toggle focus
-			m.focusInput = !m.focusInput
-			if m.focusInput {
-				m.textInput.Focus()
+			if m.focusInput == TaskInputFocus {
+				m.focusInput = DesInputFocus
 				m.table.Blur()
-			} else {
-				m.textInput.Blur()
+				m.taskInput.Blur()
+				m.descriptonInput.Focus()
+				return m, nil
+
+			} else if m.focusInput == DesInputFocus {
+				m.focusInput = TableFocus
+				m.taskInput.Blur()
+				m.table.Blur()
 				m.table.Focus()
+				return m, nil
+
+			} else if m.focusInput == TableFocus {
+				m.focusInput = TaskInputFocus
+				m.taskInput.Focus()
+				m.table.Blur()
+				m.descriptonInput.Blur()
+				return m, nil
+
+			} else {
+				return m, nil
 			}
-			return m, nil
 
 		case tea.KeyCtrlC.String():
 			return m, tea.Quit

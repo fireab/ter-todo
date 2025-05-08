@@ -15,6 +15,14 @@ const (
 	Pending StatusType = "pending"
 )
 
+type FocusType int
+
+const (
+	TaskInputFocus FocusType = 1
+	DesInputFocus  FocusType = 2
+	TableFocus     FocusType = 3
+)
+
 type taskInput struct {
 	Id          int
 	Title       string
@@ -47,9 +55,8 @@ func initialModel() model {
 		Underline(true)
 
 	ti2.Prompt = "✏️  "
-	ti2.Focus()
-	ti2.CharLimit = 156
-	ti2.Width = 20
+	ti2.CharLimit = 400
+	ti2.Width = 100
 
 	var columns = []table.Column{
 		{Title: "ID", Width: 5},
@@ -61,7 +68,6 @@ func initialModel() model {
 	// initalize table
 	t := table.New(
 		table.WithColumns(columns),
-		// table.WithRows(rows),
 		table.WithFocused(true),
 		table.WithHeight(7),
 	)
@@ -76,30 +82,33 @@ func initialModel() model {
 		Foreground(lipgloss.Color("229")).
 		Background(lipgloss.Color("57")).
 		Bold(false)
+
+	// s.Cell = s.Cell.BorderStyle(lipgloss.RoundedBorder())
 	t.SetStyles(s)
 
 	return model{
-		textInput:  ti,
-		TaskList:   []taskInput{},
-		err:        nil,
-		table:      t,
-		focusInput: true,
+		taskInput:       ti,
+		descriptonInput: ti2,
+		TaskList:        []taskInput{},
+		err:             nil,
+		table:           t,
+		focusInput:      TaskInputFocus,
 	}
 }
 
 // Define the model
 type model struct {
-	textInput  textinput.Model
-	TaskList   []taskInput
-	hight      int
-	width      int
-	err        error
-	table      table.Model
-	focusInput bool
+	taskInput       textinput.Model
+	descriptonInput textinput.Model
+	TaskList        []taskInput
+	hight           int
+	width           int
+	err             error
+	table           table.Model
+	focusInput      FocusType
 }
 
 // Initialize the model
 func (m model) Init() tea.Cmd {
-	// return textinput.Blink
 	return nil
 }
