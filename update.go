@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -8,15 +9,23 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+func getIndex(value StatusType, arr statusStates) int {
+	for i, v := range arr {
+		if v == value {
+			return i
+		}
+	}
+	return -1 // not found
+}
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	if m.focusInput == TaskInputFocus {
 		m.taskInput, cmd = m.taskInput.Update(msg)
 	} else if m.focusInput == DesInputFocus {
-
 		m.descriptonInput, cmd = m.descriptonInput.Update(msg)
 	} else {
-
+		// fmt.Println(">>", m.TaskList)
 		m.table, cmd = m.table.Update(msg)
 	}
 
@@ -35,7 +44,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						Status:      ToDo,
 					})
 
-					// ✅ Update table rows here
 					var rows = make([]table.Row, len(m.TaskList))
 					for i, task := range m.TaskList {
 						rows[i] = table.Row{
@@ -54,14 +62,34 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.focusInput = TaskInputFocus
 				m.descriptonInput.Reset()
 			}
-			if m.focusInput == TableFocus {
-				// fmt.Println("Table clicked", m.table.SelectedRow()[1])
-				// fmt.Println("Table Focuse", m.table.Focused())
-				return m, tea.Batch(
-					tea.Printf("Let's go to %s!", m.table.SelectedRow()[1]),
-				)
-			}
 
+			return m, nil
+		case tea.KeyLeft.String(), tea.KeyRight.String():
+			if m.focusInput == TableFocus {
+				rowStatus := m.table.SelectedRow()[3]
+				rowIdInt, err := strconv.Atoi(m.table.SelectedRow()[0])
+				if err != nil {
+					fmt.Println("Error converting rowId to integer:", err)
+					return m, nil
+				}
+
+				index := getIndex(StatusType(rowStatus), m.stateStatus)
+				s := m.UpdateStates(index, msg.String())
+
+				m.TaskList[rowIdInt-1].Status = s
+				// let render the array to the table
+				var rows = make([]table.Row, len(m.TaskList))
+				for i, task := range m.TaskList {
+					rows[i] = table.Row{
+						strconv.Itoa(task.Id),
+						task.Title,
+						task.Description,
+						string(task.Status),
+					}
+				}
+				m.table.SetRows(rows)
+
+			}
 			return m, nil
 
 		case "esc":

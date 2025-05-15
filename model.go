@@ -23,6 +23,8 @@ const (
 	TableFocus     FocusType = 3
 )
 
+type statusStates []StatusType
+
 type taskInput struct {
 	Id          int
 	Title       string
@@ -93,6 +95,7 @@ func initialModel() model {
 		err:             nil,
 		table:           t,
 		focusInput:      TaskInputFocus,
+		stateStatus:     []StatusType{ToDo, Pending, Done},
 	}
 }
 
@@ -106,9 +109,27 @@ type model struct {
 	err             error
 	table           table.Model
 	focusInput      FocusType
+	stateStatus     statusStates
 }
 
 // Initialize the model
 func (m model) Init() tea.Cmd {
 	return nil
+}
+
+func (m model) UpdateStates(index int, key string) StatusType {
+	if key == tea.KeyRight.String() {
+		if index < len(m.stateStatus)-1 {
+			return m.stateStatus[index+1]
+		} else {
+			return m.stateStatus[0]
+		}
+	} else {
+		if index > 0 {
+			return m.stateStatus[index-1]
+		} else {
+			return m.stateStatus[len(m.stateStatus)-1]
+		}
+	}
+
 }
