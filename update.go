@@ -7,6 +7,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/google/uuid"
 )
 
 func getIndex(value StatusType, arr statusStates) int {
@@ -38,7 +39,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				desc := strings.TrimSpace(m.descriptonInput.Value())
 				if val != "" {
 					m.TaskList = append(m.TaskList, taskInput{
-						Id:          len(m.TaskList) + 1,
+						Id:          uuid.New(),
 						Title:       val,
 						Description: desc,
 						Status:      ToDo,
@@ -47,7 +48,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					var rows = make([]table.Row, len(m.TaskList))
 					for i, task := range m.TaskList {
 						rows[i] = table.Row{
-							strconv.Itoa(task.Id),
+							strconv.Itoa(i + 1),
 							task.Title,
 							task.Description,
 							string(task.Status),
@@ -81,7 +82,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				var rows = make([]table.Row, len(m.TaskList))
 				for i, task := range m.TaskList {
 					rows[i] = table.Row{
-						strconv.Itoa(task.Id),
+						strconv.Itoa(i + 1),
 						task.Title,
 						task.Description,
 						string(task.Status),
@@ -91,6 +92,41 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			}
 			return m, nil
+		// implement delete
+		case tea.KeyDelete.String():
+			if m.focusInput == TableFocus {
+				if len(m.TaskList) == 0 {
+					return m, nil
+				}
+				rowId := m.table.SelectedRow()[0]
+				// remove index rowId-1 from TaskList
+				rowIdInt, err := strconv.Atoi(rowId)
+				if err != nil {
+					fmt.Println("Error converting rowId to integer:", err)
+					return m, nil
+				}
+
+				if rowIdInt > 0 && rowIdInt <= len(m.TaskList) {
+					m.TaskList = append(m.TaskList[:rowIdInt-1], m.TaskList[rowIdInt:]...)
+					// let render the array to the table
+					var rows = make([]table.Row, len(m.TaskList))
+					for i, task := range m.TaskList {
+						rows[i] = table.Row{
+							strconv.Itoa(i + 1),
+							task.Title,
+							task.Description,
+							string(task.Status),
+						}
+					}
+					m.focusInput = TableFocus
+					m.table.MoveUp(1)
+					m.table.SetRows(rows)
+				} else {
+					fmt.Println("Invalid row ID:", rowIdInt)
+					return m, nil
+				}
+
+			}
 
 		case "esc":
 			if m.table.Focused() {

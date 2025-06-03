@@ -5,6 +5,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/google/uuid"
 )
 
 type StatusType string
@@ -26,7 +27,7 @@ const (
 type statusStates []StatusType
 
 type taskInput struct {
-	Id          int
+	Id          uuid.UUID
 	Title       string
 	Description string
 	Status      StatusType
@@ -131,5 +132,17 @@ func (m model) UpdateStates(index int, key string) StatusType {
 			return m.stateStatus[len(m.stateStatus)-1]
 		}
 	}
+
+}
+
+func (m model) DeleteTask(index int) {
+	if index < 0 || index > len(m.TaskList)-1 {
+		return
+	}
+	m.TaskList = append(m.TaskList[:index], m.TaskList[index+1:]...)
+
+}
+
+func arrayToRow(m model, index int, task taskInput) {
 
 }
