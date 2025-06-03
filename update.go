@@ -95,6 +95,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// implement delete
 		case tea.KeyDelete.String():
 			if m.focusInput == TableFocus {
+				if len(m.TaskList) == 0 {
+					return m, nil
+				}
 				rowId := m.table.SelectedRow()[0]
 				// remove index rowId-1 from TaskList
 				rowIdInt, err := strconv.Atoi(rowId)
@@ -102,6 +105,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					fmt.Println("Error converting rowId to integer:", err)
 					return m, nil
 				}
+
 				if rowIdInt > 0 && rowIdInt <= len(m.TaskList) {
 					m.TaskList = append(m.TaskList[:rowIdInt-1], m.TaskList[rowIdInt:]...)
 					// let render the array to the table
@@ -114,9 +118,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							string(task.Status),
 						}
 					}
+					m.focusInput = TableFocus
+					m.table.MoveUp(1)
 					m.table.SetRows(rows)
 				} else {
 					fmt.Println("Invalid row ID:", rowIdInt)
+					return m, nil
 				}
 
 			}
