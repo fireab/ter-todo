@@ -32,3 +32,5 @@ go.work.sum
 
 # end with .sqlite
 *.sqlite
+
+ter-todo
