@@ -19,8 +19,25 @@ func getIndex(value StatusType, arr statusStates) int {
 	return -1 // not found
 }
 
+var val = 0
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
+	if val == 0 {
+		m.TaskList, _ = m.GetTasks()
+
+		var rows = make([]table.Row, len(m.TaskList))
+		for i, task := range m.TaskList {
+			rows[i] = table.Row{
+				strconv.Itoa(i + 1),
+				task.Title,
+				task.Description,
+				string(task.Status),
+			}
+		}
+		m.table.SetRows(rows)
+		val = 1
+	}
 	if m.focusInput == TaskInputFocus {
 		m.taskInput, cmd = m.taskInput.Update(msg)
 	} else if m.focusInput == DesInputFocus {
@@ -38,11 +55,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				val := strings.TrimSpace(m.taskInput.Value())
 				desc := strings.TrimSpace(m.descriptonInput.Value())
 				if val != "" {
-					m.TaskList = append(m.TaskList, taskInput{
-						Id:          uuid.New(),
-						Title:       val,
-						Description: desc,
-						Status:      ToDo,
+					m.AddTask(Task{
+						ID:         uuid.New(),
+						Descripton: desc,
+						Title:      val,
+						Status:     string(ToDo),
 					})
 
 					var rows = make([]table.Row, len(m.TaskList))
