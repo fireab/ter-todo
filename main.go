@@ -47,7 +47,7 @@ func initDB() *gorm.DB {
 		panic("failed to migrate database")
 	}
 
-	fmt.Println("Database connected and migrated!")
+	// fmt.Println("Database connected and migrated!")
 	return db
 }
 
