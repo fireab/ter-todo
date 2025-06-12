@@ -27,9 +27,16 @@ go build -o ter-todo
 ./ter-todo
 ```
 
-### Download Binary
+### Download Pre-built Binary
 
-> _Coming soon: Pre-built binaries for Linux will be available on the [Releases](https://github.com/fireab/ter-todo/releases) page._
+You can download the latest Linux binary from the [Releases](https://github.com/fireab/ter-todo/releases) page.
+
+#### To run the binary:
+
+```sh
+chmod +x ter-todo   # Make it executable
+./ter-todo           # Run the app
+```
 
 ## Usage
 
