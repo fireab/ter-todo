@@ -198,3 +198,28 @@ func (m *model) DeleteTaskFromDB(taskId uuid.UUID) error {
 	}
 	return nil
 }
+
+// update task in the db and json
+func (m *model) UpdateTaskInDB(id uuid.UUID, task Task) error {
+	// Find the task by ID
+	task.ID = id
+	response := DB.Save(&task)
+	if response.Error != nil {
+		err := response.Error
+		return err
+	}
+
+	// Update the task in the TaskList
+	for i, t := range m.TaskList {
+		if t.Id == task.ID {
+			m.TaskList[i] = taskInput{
+				Id:          task.ID,
+				Title:       task.Title,
+				Description: task.Descripton,
+				Status:      StatusType(task.Status),
+			}
+			break
+		}
+	}
+	return nil
+}

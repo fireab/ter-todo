@@ -107,6 +107,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				m.table.SetRows(rows)
 
+				// update the database
+				m.UpdateTaskInDB(m.TaskList[rowIdInt-1].Id, Task{
+					Status:     string(s),
+					Title:      m.TaskList[rowIdInt-1].Title,
+					Descripton: m.TaskList[rowIdInt-1].Description,
+				})
+
 			}
 			return m, nil
 		// implement delete
@@ -124,7 +131,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				if rowIdInt > 0 && rowIdInt <= len(m.TaskList) {
-					m.TaskList = append(m.TaskList[:rowIdInt-1], m.TaskList[rowIdInt:]...)
+					// m.TaskList = append(m.TaskList[:rowIdInt-1], m.TaskList[rowIdInt:]...)
+					// remove the task from the DB and the TaskList
+					m.DeleteTaskFromDB(m.TaskList[rowIdInt-1].Id)
+
 					// let render the array to the table
 					var rows = make([]table.Row, len(m.TaskList))
 					for i, task := range m.TaskList {
@@ -138,6 +148,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.focusInput = TableFocus
 					m.table.MoveUp(1)
 					m.table.SetRows(rows)
+
 				} else {
 					fmt.Println("Invalid row ID:", rowIdInt)
 					return m, nil
