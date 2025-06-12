@@ -2,7 +2,7 @@
 
 A terminal-based TODO manager for Linux, built with Go, [Bubble Tea](https://github.com/charmbracelet/bubbletea), and SQLite.
 
-![screenshot](screenshot.png) <!-- Add a screenshot if you have one -->
+![screenshot](asset/todo.png) <!-- Add a screenshot if you have one -->
 
 ## Features
 
