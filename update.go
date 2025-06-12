@@ -19,8 +19,25 @@ func getIndex(value StatusType, arr statusStates) int {
 	return -1 // not found
 }
 
+var val = 0
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
+	if val == 0 {
+		m.TaskList, _ = m.GetTasks()
+
+		var rows = make([]table.Row, len(m.TaskList))
+		for i, task := range m.TaskList {
+			rows[i] = table.Row{
+				strconv.Itoa(i + 1),
+				task.Title,
+				task.Description,
+				string(task.Status),
+			}
+		}
+		m.table.SetRows(rows)
+		val = 1
+	}
 	if m.focusInput == TaskInputFocus {
 		m.taskInput, cmd = m.taskInput.Update(msg)
 	} else if m.focusInput == DesInputFocus {
@@ -38,11 +55,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				val := strings.TrimSpace(m.taskInput.Value())
 				desc := strings.TrimSpace(m.descriptonInput.Value())
 				if val != "" {
-					m.TaskList = append(m.TaskList, taskInput{
-						Id:          uuid.New(),
-						Title:       val,
-						Description: desc,
-						Status:      ToDo,
+					m.AddTask(Task{
+						ID:         uuid.New(),
+						Descripton: desc,
+						Title:      val,
+						Status:     string(ToDo),
 					})
 
 					var rows = make([]table.Row, len(m.TaskList))
@@ -90,6 +107,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				m.table.SetRows(rows)
 
+				// update the database
+				m.UpdateTaskInDB(m.TaskList[rowIdInt-1].Id, Task{
+					Status:     string(s),
+					Title:      m.TaskList[rowIdInt-1].Title,
+					Descripton: m.TaskList[rowIdInt-1].Description,
+				})
+
 			}
 			return m, nil
 		// implement delete
@@ -107,7 +131,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				if rowIdInt > 0 && rowIdInt <= len(m.TaskList) {
-					m.TaskList = append(m.TaskList[:rowIdInt-1], m.TaskList[rowIdInt:]...)
+					// m.TaskList = append(m.TaskList[:rowIdInt-1], m.TaskList[rowIdInt:]...)
+					// remove the task from the DB and the TaskList
+					m.DeleteTaskFromDB(m.TaskList[rowIdInt-1].Id)
+
 					// let render the array to the table
 					var rows = make([]table.Row, len(m.TaskList))
 					for i, task := range m.TaskList {
@@ -121,6 +148,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.focusInput = TableFocus
 					m.table.MoveUp(1)
 					m.table.SetRows(rows)
+
 				} else {
 					fmt.Println("Invalid row ID:", rowIdInt)
 					return m, nil

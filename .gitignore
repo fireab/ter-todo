@@ -23,3 +23,12 @@ go.work.sum
 
 # env file
 .env
+
+# end with .db
+*.db
+
+# end with .log
+*.log
+
+# end with .sqlite
+*.sqlite

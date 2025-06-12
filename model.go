@@ -93,10 +93,11 @@ func initialModel() model {
 		taskInput:       ti,
 		descriptonInput: ti2,
 		TaskList:        []taskInput{},
-		err:             nil,
-		table:           t,
-		focusInput:      TaskInputFocus,
-		stateStatus:     []StatusType{ToDo, Pending, Done},
+		// TaskList:    GetTasks(),
+		err:         nil,
+		table:       t,
+		focusInput:  TaskInputFocus,
+		stateStatus: []StatusType{ToDo, Pending, Done},
 	}
 }
 
@@ -143,6 +144,82 @@ func (m model) DeleteTask(index int) {
 
 }
 
-func arrayToRow(m model, index int, task taskInput) {
+// add task to the db and the json
+func (m *model) AddTask(task Task) error {
+	response := DB.Create(&task)
+	if response.Error != nil {
+		err := response.Error
+		return err
+	}
 
+	m.TaskList = append(m.TaskList, taskInput{
+		Id:          task.ID,
+		Title:       task.Title,
+		Description: task.Descripton,
+		Status:      StatusType(task.Status),
+	})
+	return nil
+}
+
+// get all tasks from the database
+func (m model) GetTasks() ([]taskInput, error) {
+	var tasks []Task
+	response := DB.Find(&tasks)
+	if response.Error != nil {
+		err := response.Error
+		return nil, err
+	}
+	var intialTaskList = make([]taskInput, len(tasks))
+	for i, task := range tasks {
+		intialTaskList[i] = taskInput{
+			Id:          task.ID,
+			Title:       task.Title,
+			Description: task.Descripton,
+			Status:      StatusType(task.Status),
+		}
+	}
+	return intialTaskList, nil
+}
+
+// delete task form the db and json
+func (m *model) DeleteTaskFromDB(taskId uuid.UUID) error {
+	response := DB.Delete(&Task{}, taskId)
+	if response.Error != nil {
+		err := response.Error
+		return err
+	}
+
+	// Remove the task from the TaskList
+	for i, task := range m.TaskList {
+		if task.Id == taskId {
+			m.TaskList = append(m.TaskList[:i], m.TaskList[i+1:]...)
+			break
+		}
+	}
+	return nil
+}
+
+// update task in the db and json
+func (m *model) UpdateTaskInDB(id uuid.UUID, task Task) error {
+	// Find the task by ID
+	task.ID = id
+	response := DB.Save(&task)
+	if response.Error != nil {
+		err := response.Error
+		return err
+	}
+
+	// Update the task in the TaskList
+	for i, t := range m.TaskList {
+		if t.Id == task.ID {
+			m.TaskList[i] = taskInput{
+				Id:          task.ID,
+				Title:       task.Title,
+				Description: task.Descripton,
+				Status:      StatusType(task.Status),
+			}
+			break
+		}
+	}
+	return nil
 }
